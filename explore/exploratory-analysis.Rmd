@@ -1,0 +1,43 @@
+---
+title: "Diabetes in MHHS - Exploratory Analysis"
+author: "Brian Gulbis"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: 
+    html_document:
+        code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE}
+library(tidyverse)
+library(forcats)
+library(plotly)
+
+x <- dirr::get_rds("../data/tidy")
+```
+
+```{r, fig.cap="Number of patients with any ICD-10-CM code for diabetes during an encounter at each facility in June 2017"}
+encounter_types <- c("Inpatient", "Emergency", "Observation")
+
+count_facility <- all_patients %>%
+    filter(visit.type %in% encounter_types) %>%
+    count(facility, sort = TRUE) %>%
+    rename(n_pts = n)
+
+all_patients %>%
+    filter(visit.type %in% encounter_types) %>%
+    count(facility, visit.type, sort = TRUE) %>%
+    left_join(count_facility, by = "facility") %>%
+    arrange(desc(n_pts), desc(n)) %>%
+    mutate_at("facility", as_factor) %>%
+    mutate_at("facility", fct_rev) %>%
+    plot_ly() %>%
+    add_bars(x = ~n, y = ~facility, color = ~visit.type) %>%
+    layout(barmode = "stack",
+           xaxis = list(title = "Patients"),
+           yaxis = list(title = "Facility", showgrid = FALSE),
+           margin = list(l = 150))
+```
