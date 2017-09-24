@@ -1,5 +1,6 @@
 ---
-title: "Diabetes in MHHS - Exploratory Analysis"
+title: "Diabetes in MHHS"
+subtitle: "Exploratory Analysis"
 author: "Brian Gulbis"
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output: 
@@ -21,7 +22,7 @@ library(kableExtra)
 x <- dirr::get_rds("../data/tidy")
 ```
 
-```{r, fig.cap="Number of patients with any ICD-10-CM code for diabetes during an encounter at each facility. Data for each facility are split into type of visit (inpatient, emergency, or observation)."}
+```{r, fig.cap="Number of patients with any ICD-10-CM code for diabetes during an encounter at each facility. Data for each facility are split into type of visit (inpatient, emergency, or observation). Data represents a 4-month sample from fiscal year 2017."}
 encounter_types <- c("Inpatient", "Emergency", "Observation")
 
 count_facility <- dm_patients %>%
@@ -58,11 +59,11 @@ count_dm <- dm_patients %>%
     mutate_at("facility", as_factor) 
 ```
 
-```{r, fig.cap="Percent of admitted patients with diabetes at each facility."}
+```{r, fig.cap="Percent of admitted patients with diabetes at each facility. The size of the dot corresponds to the total number of inpatients at each facility."}
 count_dm %>%
     mutate_at("facility", fct_rev) %>%
     plot_ly() %>%
-    add_bars(x = ~pct_dm, y = ~facility) %>%
+    add_markers(x = ~pct_dm, y = ~facility, size = ~n_all) %>%
     layout(barmode = "stack",
            xaxis = list(title = "Patients (%)"),
            yaxis = list(title = "Facility", showgrid = FALSE),
@@ -71,7 +72,10 @@ count_dm %>%
 
 ```{r}
 count_dm %>%
-    select(Facility = facility, `Patients (%)` = pct_dm) %>%
-    knitr::kable(digits = 0, caption = "Percent of admitted patients with diabetes at each facility")
+    mutate(annual_n = (n_all / 4) * 12,
+           annaul_dm = (n / 4) * 12) %>%
+    select(Facility = facility, `Number of Patients` = annual_n, `Number with Diabetes` = annaul_dm, `Patients with Diabetes (%)` = pct_dm) %>%
+    knitr::kable(digits = 0, caption = "Admitted patients with diabetes at each facility from fiscal year 2017[note]") %>%
+    kable_styling(full_width = FALSE) %>%
+    add_footnote("Number of patients is on an annual basis, estimated from a sample of four months throughout fiscal year 2017", notation = "symbol")
 ```
-
