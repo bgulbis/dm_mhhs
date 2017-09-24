@@ -9,25 +9,27 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(knitr.table.format = "html")
 ```
 
 ```{r, message=FALSE}
 library(tidyverse)
 library(forcats)
 library(plotly)
+library(kableExtra)
 
 x <- dirr::get_rds("../data/tidy")
 ```
 
-```{r, fig.cap="Number of patients with any ICD-10-CM code for diabetes during an encounter at each facility in June 2017"}
+```{r, fig.cap="Number of patients with any ICD-10-CM code for diabetes during an encounter at each facility. Data for each facility are split into type of visit (inpatient, emergency, or observation)."}
 encounter_types <- c("Inpatient", "Emergency", "Observation")
 
-count_facility <- all_patients %>%
+count_facility <- dm_patients %>%
     filter(visit.type %in% encounter_types) %>%
     count(facility, sort = TRUE) %>%
     rename(n_pts = n)
 
-all_patients %>%
+dm_patients %>%
     filter(visit.type %in% encounter_types) %>%
     count(facility, visit.type, sort = TRUE) %>%
     left_join(count_facility, by = "facility") %>%
@@ -41,3 +43,35 @@ all_patients %>%
            yaxis = list(title = "Facility", showgrid = FALSE),
            margin = list(l = 150))
 ```
+
+```{r}
+count_all <- all_inpatients %>%
+    count(facility) %>%
+    rename(n_all = n)
+
+count_dm <- dm_patients %>%
+    filter(visit.type == "Inpatient") %>%
+    count(facility) %>%
+    left_join(count_all, by = "facility") %>%
+    mutate(pct_dm = n / n_all * 100) %>%
+    arrange(desc(pct_dm)) %>%
+    mutate_at("facility", as_factor) 
+```
+
+```{r, fig.cap="Percent of admitted patients with diabetes at each facility."}
+count_dm %>%
+    mutate_at("facility", fct_rev) %>%
+    plot_ly() %>%
+    add_bars(x = ~pct_dm, y = ~facility) %>%
+    layout(barmode = "stack",
+           xaxis = list(title = "Patients (%)"),
+           yaxis = list(title = "Facility", showgrid = FALSE),
+           margin = list(l = 150))
+```
+
+```{r}
+count_dm %>%
+    select(Facility = facility, `Patients (%)` = pct_dm) %>%
+    knitr::kable(digits = 0, caption = "Percent of admitted patients with diabetes at each facility")
+```
+
