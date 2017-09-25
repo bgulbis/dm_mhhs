@@ -1,6 +1,6 @@
 ---
 title: "Diabetes in MHHS"
-subtitle: "Exploratory Analysis"
+subtitle: "Exploratory Data Analysis"
 author: "Brian Gulbis"
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output: 
@@ -16,13 +16,29 @@ options(knitr.table.format = "html")
 ```{r, message=FALSE}
 library(tidyverse)
 library(forcats)
+library(stringr)
 library(plotly)
 library(kableExtra)
 
 x <- dirr::get_rds("../data/tidy")
+plot_col <- "#cccccc"
+
+facilities <- c("HERMANN" = "Texas Med Ctr",
+                "CYPRESS" = "Cypress",
+                "PEARLAND" = "Pearland",
+                "Woodland" = "Woodlands")
+
+dm_patients <- dm_patients %>%
+    mutate_at("facility", str_replace_all, pattern = facilities) %>%
+    mutate_at("facility", str_replace_all, pattern = "^.. ", replacement = "")
+
+all_inpatients <- all_inpatients %>%
+    mutate_at("facility", str_replace_all, pattern = facilities) %>%
+    mutate_at("facility", str_replace_all, pattern = "^.. ", replacement = "")
+
 ```
 
-```{r, fig.cap="Number of patients with any ICD-10-CM code for diabetes during an encounter at each facility. Data for each facility are split into type of visit (inpatient, emergency, or observation). Data represents a 4-month sample from fiscal year 2017."}
+```{r, fig.cap="Number of patients with any ICD-10-CM code for diabetes during an encounter at each facility. Data for each facility are split into type of visit (inpatient, emergency, or observation). Data were taken from a 4-month sample from fiscal year 2017."}
 encounter_types <- c("Inpatient", "Emergency", "Observation")
 
 count_facility <- dm_patients %>%
@@ -40,8 +56,16 @@ dm_patients %>%
     plot_ly() %>%
     add_bars(x = ~n, y = ~facility, color = ~visit.type) %>%
     layout(barmode = "stack",
-           xaxis = list(title = "Patients"),
-           yaxis = list(title = "Facility", showgrid = FALSE),
+           xaxis = list(title = "Patients", 
+                        showgrid = FALSE, 
+                        showline = TRUE, 
+                        linecolor = plot_col, 
+                        ticks = "outside",
+                        tickcolor = plot_col),
+           yaxis = list(title = "Facility", 
+                        showgrid = FALSE,
+                        showline = FALSE, 
+                        linecolor = plot_col),
            margin = list(l = 150))
 ```
 
@@ -57,17 +81,38 @@ count_dm <- dm_patients %>%
     mutate(pct_dm = n / n_all * 100) %>%
     arrange(desc(pct_dm)) %>%
     mutate_at("facility", as_factor) 
+
+count_dm_mhhs <- count_dm %>%
+    summarize_at(c("n", "n_all"), sum, na.rm = TRUE) %>%
+    mutate(facility = "MHHS Combined",
+           pct_dm = n / n_all * 100) %>%
+    select(facility, everything())
 ```
 
-```{r, fig.cap="Percent of admitted patients with diabetes at each facility. The size of the dot corresponds to the total number of inpatients at each facility."}
+```{r, fig.cap="Percent of admitted patients with diabetes at each facility. The size of the dot corresponds to the total number of inpatients at each facility. The vertical line indicates the percent of diabetes patients from all MHHS facilities combined."}
 count_dm %>%
     mutate_at("facility", fct_rev) %>%
     plot_ly() %>%
     add_markers(x = ~pct_dm, y = ~facility, size = ~n_all) %>%
+    # add_lines(data = count_dm_mhhs, )
     layout(barmode = "stack",
-           xaxis = list(title = "Patients (%)"),
-           yaxis = list(title = "Facility", showgrid = FALSE),
-           margin = list(l = 150))
+           xaxis = list(title = "Patients (%)", 
+                        showgrid = FALSE, 
+                        showline = TRUE, 
+                        linecolor = plot_col, 
+                        ticks = "outside",
+                        tickcolor = plot_col),
+           yaxis = list(title = "Facility", 
+                        showgrid = FALSE, 
+                        showline = TRUE, 
+                        linecolor = plot_col),
+           margin = list(l = 150),
+           shapes = list(type = "line", 
+                         x0 = count_dm_mhhs$pct_dm, 
+                         x1 = count_dm_mhhs$pct_dm, 
+                         y0 = 0, 
+                         y1 = 11,
+                         line = list(color = plot_col)))
 ```
 
 ```{r}
