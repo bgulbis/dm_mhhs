@@ -51,6 +51,7 @@ dm_patients %>%
     count(facility, visit.type, sort = TRUE) %>%
     left_join(count_facility, by = "facility") %>%
     arrange(desc(n_pts), desc(n)) %>%
+    mutate_at("visit.type", factor, levels = encounter_types) %>%
     mutate_at("facility", as_factor) %>%
     mutate_at("facility", fct_rev) %>%
     plot_ly() %>%
@@ -68,6 +69,33 @@ dm_patients %>%
                         linecolor = plot_col),
            margin = list(l = 150))
 ```
+
+```{r fig.cap="Number of patients with each category of diabetes by facility."}
+dm_patients %>%
+    filter(visit.type == "Inpatient") %>%
+    select(millennium.id, facility) %>%
+    left_join(dm_types, by = "millennium.id") %>%
+    count(facility, dm_type, sort = TRUE) %>%
+    left_join(count_facility, by = "facility") %>%
+    arrange(desc(n_pts), desc(n)) %>%
+    mutate_at(c("facility", "dm_type"), as_factor) %>%
+    mutate_at("facility", fct_rev) %>%
+    plot_ly() %>%
+    add_bars(x = ~n, y = ~facility, color = ~dm_type) %>%
+    layout(barmode = "stack",
+           xaxis = list(title = "Patients", 
+                        showgrid = FALSE, 
+                        showline = TRUE, 
+                        linecolor = plot_col, 
+                        ticks = "outside",
+                        tickcolor = plot_col),
+           yaxis = list(title = "Facility", 
+                        showgrid = FALSE,
+                        showline = FALSE, 
+                        linecolor = plot_col),
+           margin = list(l = 150))
+```
+
 
 ```{r}
 count_all <- all_inpatients %>%
