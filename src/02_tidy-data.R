@@ -44,4 +44,15 @@ write_rds(data_dm_diag, "data/tidy/data_dm_diagnosis.Rds", "gz")
 
 # a1c --------------------------------------------------
 
+data_a1c <- read_data(dir_raw, "labs-a1c", FALSE) %>%
+    as.labs() %>%
+    tidy_data() %>%
+    group_by(millennium.id) %>%
+    summarize_at(c("lab.result", "censor.low"), max, na.rm = TRUE) %>%
+    mutate_at("lab.result", funs(na_if(., -Inf))) %>%
+    mutate_at("censor.low", as.logical) %>%
+    mutate(low_a1c = lab.result <= 8 | censor.low,
+           high_a1c = !low_a1c) %>%
+    select(-low_a1c)
 
+write_rds(data_a1c, "data/tidy/data_a1c.Rds", "gz")
