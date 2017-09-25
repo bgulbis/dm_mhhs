@@ -22,7 +22,7 @@ mbo_icd10 <- str_c(icd10_dm, collapse = ";")
 patients <- read_data(dir_raw, "patients", FALSE) %>%
     as.patients()
 
-write_rds(patients, "data/tidy/dm_patients.Rds", "gz")
+write_rds(patients, "data/tidy/data_patients_dm.Rds", "gz")
 
 inpt <- filter(patients, visit.type == "Inpatient")
 
@@ -48,4 +48,4 @@ id_mbo <- concat_encounters(inpt$millennium.id)
 all_pts <- read_data(dir_raw, "all-pts", FALSE) %>%
     as.patients()
 
-write_rds(all_pts, "data/tidy/all_inpatients.Rds", "gz")
+write_rds(all_pts, "data/tidy/data_inpatients.Rds", "gz")

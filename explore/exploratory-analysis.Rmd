@@ -28,11 +28,11 @@ facilities <- c("HERMANN" = "Texas Med Ctr",
                 "PEARLAND" = "Pearland",
                 "Woodland" = "Woodlands")
 
-dm_patients <- dm_patients %>%
+dm_patients <- data_patients_dm %>%
     mutate_at("facility", str_replace_all, pattern = facilities) %>%
     mutate_at("facility", str_replace_all, pattern = "^.. ", replacement = "")
 
-all_inpatients <- all_inpatients %>%
+all_inpatients <- data_inpatients %>%
     mutate_at("facility", str_replace_all, pattern = facilities) %>%
     mutate_at("facility", str_replace_all, pattern = "^.. ", replacement = "")
 
@@ -70,13 +70,18 @@ dm_patients %>%
            margin = list(l = 150))
 ```
 
-```{r fig.cap="Number of patients with each category of diabetes by facility."}
+```{r fig.cap="Number of admitted patients with each category of diabetes by facility."}
+count_facility_inpt <- dm_patients %>%
+    filter(visit.type == "Inpatient") %>%
+    count(facility, sort = TRUE) %>%
+    rename(n_pts = n)
+
 dm_patients %>%
     filter(visit.type == "Inpatient") %>%
     select(millennium.id, facility) %>%
-    left_join(dm_types, by = "millennium.id") %>%
+    left_join(data_dm_diagnosis, by = "millennium.id") %>%
     count(facility, dm_type, sort = TRUE) %>%
-    left_join(count_facility, by = "facility") %>%
+    left_join(count_facility_inpt, by = "facility") %>%
     arrange(desc(n_pts), desc(n)) %>%
     mutate_at(c("facility", "dm_type"), as_factor) %>%
     mutate_at("facility", fct_rev) %>%
@@ -94,6 +99,10 @@ dm_patients %>%
                         showline = FALSE, 
                         linecolor = plot_col),
            margin = list(l = 150))
+```
+
+```{r}
+
 ```
 
 

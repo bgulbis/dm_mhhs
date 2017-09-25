@@ -20,7 +20,7 @@ data_comorbid <- icd10_comorbid_elix(diagnosis, return_df = TRUE) %>%
     select(millennium.id, CHF, HTN, Pulmonary) %>%
     left_join(diag_comorbid, by = "millennium.id")
 
-write_rds(data_comorbid, "data/tidy/comorbidities.Rds", "gz")
+write_rds(data_comorbid, "data/tidy/data_comorbidities.Rds", "gz")
 
 # diabetes types ---------------------------------------
 
@@ -40,4 +40,8 @@ data_dm_diag <- icd10_comorbid(diagnosis, icd_dm, short_code = FALSE, return_df 
                                DM_other ~ "Other",
                                TRUE ~ "Unknown"))
 
-write_rds(data_dm_diag, "data/tidy/dm_types.Rds", "gz")
+write_rds(data_dm_diag, "data/tidy/data_dm_diagnosis.Rds", "gz")
+
+# a1c --------------------------------------------------
+
+
