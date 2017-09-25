@@ -29,9 +29,9 @@ inpt <- filter(patients, visit.type == "Inpatient")
 id_mbo <- concat_encounters(inpt$millennium.id)
 
 # run MBO queries
-#   * Clinical Events
-#       - A1c
 #   * Diagnosis - ICD-9/10-CM
+#   * Labs - Prompt
+#       - Lab Event (FILTER ON): Hgb A1c
 #   * Medications - Inpatient - Prompt
 #       - Insulin
 #   * Medications - Home and Discharge
