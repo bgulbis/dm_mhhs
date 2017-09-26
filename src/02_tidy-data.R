@@ -1,6 +1,7 @@
 library(tidyverse)
 library(edwr)
 library(icd)
+library(stringr)
 
 dir_raw <- "data/raw"
 
@@ -56,3 +57,18 @@ data_a1c <- read_data(dir_raw, "labs-a1c", FALSE) %>%
     select(-low_a1c)
 
 write_rds(data_a1c, "data/tidy/data_a1c.Rds", "gz")
+
+# home meds --------------------------------------------
+
+insulin <- med_lookup("insulin")
+
+meds_home <- read_data(dir_raw, "meds-home", FALSE) %>%
+    as.meds_home()
+
+data_insulin_home <- meds_home %>%
+    filter(med.type == "Recorded / Home Meds",
+           med %in% insulin$med.name)
+
+data_insulin_dc <- meds_home %>%
+    filter(med.type == "Prescription/Discharge Order",
+           med %in% insulin$med.name)
