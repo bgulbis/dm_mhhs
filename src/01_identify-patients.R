@@ -28,19 +28,30 @@ inpt <- filter(patients, visit.type == "Inpatient")
 
 id_mbo <- concat_encounters(inpt$millennium.id)
 
+insulin <- med_lookup("insulin") %>%
+    arrange(med.name)
+meds_insulin <- concat_encounters(insulin$med.name)
+
 # run MBO queries
 #   * Diagnosis - ICD-9/10-CM
 #   * Labs - Prompt
 #       - Lab Event (FILTER ON): Hgb A1c
 #   * Medications - Inpatient - Prompt
-#       - Insulin
+#       - Medication (Generic): results of meds_insulin
 #   * Medications - Home and Discharge
 
 # run EDW queries
 #   * Identifiers - by Millennium Encounter ID
 
+ids <- read_data(dir_raw, "identifiers") %>%
+    as.identifiers()
+
+id_pie <- concat_encounters(ids$pie.id)
+id_person <- concat_encounters(ids$person.id)
+
 # run EDW queries
 #   * Encounters - by Person ID
+#   * Medications - Reconciliation
 
 # run MBO query
 #   * Patients - by Visit Type
