@@ -44,10 +44,10 @@ meds_insulin <- concat_encounters(insulin$med.name)
 #   * Identifiers - by Millennium Encounter ID
 
 ids <- read_data(dir_raw, "identifiers") %>%
-    as.identifiers()
+    as.id()
 
 id_pie <- concat_encounters(ids$pie.id)
-id_person <- concat_encounters(ids$person.id)
+id_person <- concat_encounters(unique(ids$person.id))
 
 # run EDW queries
 #   * Encounters - by Person ID
