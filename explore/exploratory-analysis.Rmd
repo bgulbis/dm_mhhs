@@ -102,11 +102,6 @@ dm_patients %>%
 ```
 
 ```{r}
-
-```
-
-
-```{r}
 count_all <- all_inpatients %>%
     count(facility) %>%
     rename(n_all = n)
@@ -161,3 +156,130 @@ count_dm %>%
     kable_styling(full_width = FALSE) %>%
     add_footnote("Number of patients is on an annual basis, estimated from a sample of four months throughout fiscal year 2017", notation = "symbol")
 ```
+
+### Hemoglobin A1c
+
+```{r, fig.cap="Percent of patients with a hemoglobin A1c > 8% at each facility."}
+df_a1c <- dm_patients %>%
+    filter(visit.type == "Inpatient") %>%
+    select(millennium.id, facility) %>%
+    left_join(data_a1c, by = "millennium.id") 
+
+count_a1c <- count(df_a1c, facility)
+
+df_a1c %>%
+    group_by(facility) %>%
+    summarize_at("high_a1c", sum, na.rm = TRUE) %>%
+    left_join(count_a1c, by = "facility") %>%
+    mutate_at("pct_high_a1c", funs(high_a1c / n * 100)) %>%
+    arrange(desc(pct_high_a1c)) %>%
+    mutate_at("facility", as_factor) %>%
+    mutate_at("facility", fct_rev) %>%
+    plot_ly() %>%
+    add_bars(x = ~pct_high_a1c, y = ~facility) %>%
+    layout(barmode = "stack",
+           xaxis = list(title = "Patients (%)", 
+                        showgrid = FALSE, 
+                        showline = TRUE, 
+                        linecolor = plot_col, 
+                        ticks = "outside",
+                        tickcolor = plot_col),
+           yaxis = list(title = "Facility", 
+                        showgrid = FALSE,
+                        showline = FALSE, 
+                        linecolor = plot_col),
+           margin = list(l = 150))
+
+```
+
+```{r, fig.cap="Distribution of A1c values at each facility."}
+median_a1c <- df_a1c %>%
+    group_by(facility) %>%
+    summarize_at("lab.result", median, na.rm = TRUE) %>%
+    arrange(desc(lab.result)) %>%
+    mutate_at("facility", as_factor)
+
+df_a1c %>%
+    filter(!is.na(lab.result)) %>%
+    mutate_at("facility", factor, levels = median_a1c$facility) %>%
+    mutate_at("facility", fct_rev) %>%
+    plot_ly() %>%
+    add_boxplot(x = ~lab.result, y = ~facility) %>%
+    layout(xaxis = list(title = "A1c (%)", 
+                        showgrid = FALSE, 
+                        showline = TRUE, 
+                        linecolor = plot_col, 
+                        ticks = "outside",
+                        tickcolor = plot_col),
+           yaxis = list(title = "Facility", 
+                        showgrid = FALSE,
+                        showline = TRUE, 
+                        linecolor = plot_col),
+           margin = list(l = 150))
+
+```
+
+### Comorbidities
+
+```{r, fig.cap="Percent of patients with 2 or more comorbidities at each facility."}
+df_comorbidities <- dm_patients %>%
+    filter(visit.type == "Inpatient") %>%
+    select(millennium.id, facility) %>%
+    left_join(data_comorbidities, by = "millennium.id") %>%
+    rowwise() %>%
+    mutate(num_comorb = sum(CHF, HTN, Pulmonary, HL, CAD, na.rm = TRUE),
+           high_comorb = num_comorb > 1) %>%
+    ungroup()
+
+df_comorbidities %>%
+    group_by(facility) %>%
+    summarize_at("high_comorb", sum, na.rm = TRUE) %>%
+    left_join(count_facility_inpt, by = "facility") %>%
+    mutate_at("pct_pts", funs(high_comorb / n_pts * 100)) %>%
+    arrange(desc(pct_pts)) %>%
+    mutate_at("facility", as_factor) %>%
+    mutate_at("facility", fct_rev) %>%
+    plot_ly() %>%
+    add_bars(x = ~pct_pts, y = ~facility) %>%
+    layout(xaxis = list(title = "Patients (%)", 
+                        showgrid = FALSE, 
+                        showline = TRUE, 
+                        linecolor = plot_col, 
+                        ticks = "outside",
+                        tickcolor = plot_col),
+           yaxis = list(title = "Facility", 
+                        showgrid = FALSE,
+                        showline = FALSE, 
+                        linecolor = plot_col),
+           margin = list(l = 150))
+```
+
+
+```{r, fig.cap="Percent of patients with each comorbidity at each facility."}
+dm_patients %>%
+    filter(visit.type == "Inpatient") %>%
+    select(millennium.id, facility) %>%
+    left_join(data_comorbidities, by = "millennium.id") %>%
+    group_by(facility) %>%
+    summarize_if(is.logical, sum, na.rm = TRUE) %>%
+    left_join(count_facility_inpt, by = "facility") %>%
+    mutate_at(c("CHF", "HTN", "Pulmonary", "HL", "CAD"), funs(. / n_pts * 100)) %>%
+    gather(comorbidity, pct_pts, CHF:CAD) %>%
+    arrange(desc(n_pts)) %>%
+    mutate_at("facility", as_factor) %>%
+    mutate_at("facility", fct_rev) %>%
+    plot_ly() %>%
+    add_bars(x = ~pct_pts, y = ~facility, color = ~comorbidity) %>%
+    layout(xaxis = list(title = "Patients (%)", 
+                        showgrid = FALSE, 
+                        showline = TRUE, 
+                        linecolor = plot_col, 
+                        ticks = "outside",
+                        tickcolor = plot_col),
+           yaxis = list(title = "Facility", 
+                        showgrid = FALSE,
+                        showline = FALSE, 
+                        linecolor = plot_col),
+           margin = list(l = 150))
+```
+
