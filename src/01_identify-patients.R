@@ -1,14 +1,15 @@
 library(tidyverse)
-library(stringr)
 library(edwr)
 library(icd)
 
-dir_raw <- "data/raw"
+dir_raw <- "data/raw/2018-01"
 
-icd10_dm <- c(icd10_map_ahrq$DM,
-              icd10_map_ahrq$DMcx,
-              icd10_map_elix$DM,
-              icd10_map_elix$DMcx) %>%
+icd10_dm <- c(
+    icd10_map_ahrq$DM,
+    icd10_map_ahrq$DMcx,
+    icd10_map_elix$DM,
+    icd10_map_elix$DMcx
+) %>%
     icd_short_to_decimal() %>%
     unique()
 
@@ -18,6 +19,8 @@ mbo_icd10 <- str_c(icd10_dm, collapse = ";")
 
 # run MBO query
 #   * Patients - by ICD
+#       - Facility (Curr): HH HERMANN;HC Childrens;KM Katy;SG Sugar Land;MC Mem City;GH Greater Heights;SE Southeast;SW Southwest;TW The Woodland;NE Northeast;BL PEARLAND;CY CYPRESS
+#       - Diagnosis Type: FINAL
 
 patients <- read_data(dir_raw, "patients", FALSE) %>%
     as.patients()
@@ -30,6 +33,7 @@ id_mbo <- concat_encounters(inpt$millennium.id)
 
 insulin <- med_lookup("insulin") %>%
     arrange(med.name)
+
 meds_insulin <- concat_encounters(insulin$med.name)
 
 # run MBO queries

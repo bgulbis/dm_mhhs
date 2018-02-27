@@ -72,3 +72,7 @@ data_insulin_home <- meds_home %>%
 data_insulin_dc <- meds_home %>%
     filter(med.type == "Prescription/Discharge Order",
            med %in% insulin$med.name)
+
+med_rec <- read_data(dir_raw, "med-rec") %>%
+    distinct() %>%
+    filter(`Reconciliation Type` == "Discharge")
